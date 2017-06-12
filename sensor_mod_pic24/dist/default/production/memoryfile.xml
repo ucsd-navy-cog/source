@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<project>
+  <executable name="dist/default/production/sensor_mod_pic24.production.elf">
+    <memory name="data">
+      <units>bytes</units>
+      <length>8192</length>
+      <used>276</used>
+      <free>7916</free>
+    </memory>
+    <memory name="program">
+      <units>bytes</units>
+      <length>65268</length>
+      <used>9183</used>
+      <free>56085</free>
+    </memory>
+  </executable>
+</project>
