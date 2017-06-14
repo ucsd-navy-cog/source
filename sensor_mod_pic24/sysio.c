@@ -934,7 +934,7 @@ static bool process_interr_ext_adc_samples()
     adc_data_result_2 = foobar;
 #else
     adc_data_result_1 = ext_1_data_average;// / (BASE_TIMER4_INT_FREQ_HZ / EXPECT_CM_INTERV);
-    adc_data_result_2 = ext_2p_data_average + ext_2n_data_average;
+    adc_data_result_2 = ext_2p_data_average - ext_2n_data_average;
 #endif
 
     //int32 t;
