@@ -269,7 +269,11 @@ static void sensor_loop()
     
 #endif
 
-  // 26-30 available, 29-30 used for internal debugging
+
+  //get_battery_voltage
+  s_data[26] = get_battery_voltage();
+  
+  // 27-30 available, 29-30 used for internal debugging
 
 #if defined(ENABLE_TIME_REPORTING)
   // defer to next iteration

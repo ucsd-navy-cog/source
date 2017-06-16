@@ -47,6 +47,7 @@ static uint16 sensor_counter_vals[4] = {0,0,0,0};
 static IMU_DATA_STATE imu_data[4];
 static IMU_DATA_STATE imu_data_history[4]; // for interpolation of previous imu data
 
+
 //static uint8 ppg_adc_data[4][3]; // 3 == 24 bit compressed signed int
 //static uint8 ppg_adc_data_history[4][3]; // ditto and for interpolation of previous adc data
 
@@ -56,6 +57,8 @@ static int32 ppg_adc_data_i32[4];
 //static uint8 resp_adc_data_history[4][3]; // ditto and for interpolation of previous adc data
 
 static int32 resp_adc_data_i32[4];
+
+static uint8 battery_volt[4];
 
 static uint32 sensor_handling_ts;
 
@@ -234,6 +237,8 @@ static void get_sensor_data()
       memcpy(&ppg_adc_data_i32[sid],&rdata[18],sizeof(int32));
       memcpy(&resp_adc_data_i32[sid],&rdata[22],sizeof(int32));
       
+      battery_volt[sid] = (rdata[26]);
+      
       //ppg_adc_data_i32[sid] = 4800;
 
       //uint8 * t = (uint8*)ppg_adc_data_i32[sid];
@@ -384,12 +389,12 @@ static void upload_sensor_data()
     //msb = resp_adc_data[n][0];
     //lsb2 = resp_adc_data[n][1];
     //lsb1 = resp_adc_data[n][2];
-    msb = (resp_adc_data_i32[n] >> 16) & 0xFF;
-    lsb2 = (resp_adc_data_i32[n] >> 8) & 0xFF;
-    lsb1 = (resp_adc_data_i32[n]) & 0xFF;
-//    msb = (resp_adc_data_i32[n] >> 8) & 0xFF;
-//    lsb2 = (resp_adc_data_i32[n]) & 0xFF;
-//    lsb1 = 0x0;
+//    msb = (resp_adc_data_i32[n] >> 16) & 0xFF;
+//    lsb2 = (resp_adc_data_i32[n] >> 8) & 0xFF;
+//    lsb1 = (resp_adc_data_i32[n]) & 0xFF;
+    msb = (resp_adc_data_i32[n] >> 8) & 0xFF;
+    lsb2 = (resp_adc_data_i32[n]) & 0xFF;
+    lsb1 = 0x0;
 
     //msb = (foobar >> 16) & 0xFF;
     //lsb2 = (foobar >> 8) & 0xFF;
@@ -397,11 +402,23 @@ static void upload_sensor_data()
     buffer[i++] = (msb & 0xFE);
     buffer[i++] = (((msb & 0x01) << 7) | ((lsb2 & 0xFC) >> 1));
     buffer[i++] = (((lsb2 & 0x03) << 6) | ((lsb1 & 0xF8) >> 2));
+    
+    
+    // battery voltage
+    msb = (battery_volt[n] << 1) & 0xFF;
+    lsb2 = 0x0;
+    lsb1 = 0x0;
+    buffer[i++] = (msb & 0xFE);
+    buffer[i++] = (((msb & 0x01) << 7) | ((lsb2 & 0xFC) >> 1));
+    buffer[i++] = (((lsb2 & 0x03) << 6) | ((lsb1 & 0xF8) >> 2));
   }
 
   // footer - 4 bytes
   buffer[i++] = 0x12;
+  
   buffer[i++] = 0x12;
+  //buffer[i++] = (battery_volt[0]);
+
   buffer[i++] = 0x00;
   buffer[i++] = 0x00;
 
@@ -482,6 +499,8 @@ int main()
     memset(imu_data_history,0,sizeof(IMU_DATA_STATE) * 4);
     memset(ppg_adc_data_i32,0,sizeof(int32) * 4);
     memset(resp_adc_data_i32,0,sizeof(int32) * 4);
+    
+    memset(battery_volt,0,sizeof(uint8) * 4);
     //memset(ppg_adc_data,0,4*3);
     //memset(ppg_adc_data_history,0,4*3);
     //memset(resp_adc_data,0,4*3);

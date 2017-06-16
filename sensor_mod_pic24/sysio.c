@@ -361,6 +361,32 @@ static void InitPorts() // general for either ext ADC and/or IMU (default)
   SPI1STATbits.SPIEN = 1;
 }
 
+#define AN_BATT 1
+
+static void init_intern_adc() // primarily used for BATTERY VOLTAGE READING
+{
+    //Configure Internal ADC Registers
+    AD1CON1 = 0;
+    AD1CON1bits.ASAM = 0; //sampling bit automatically set after last conversion
+
+    AD1CON2 = 0;
+    AD1CON2bits.VCFG = 0b0; //AVDD References
+
+    AD1CON3 = 0;
+    AD1CON3bits.ADCS = 8; //divide internal system clock by 8 (8 MHz = 1 Mhz)
+
+    //initADCAcc();
+    //AD1PCFG = AD1PCFG & (~(1 << AN_BATT));
+
+    //turn ADC ON
+    AD1CON1bits.ADON = 1;
+    
+    AD1CHSbits.CH0SA = AN_BATT; // select analog input channel AN(ch)
+    AD1CON1bits.SAMP = 1; // start sampling, automatic conversion will follow
+    
+    AD1PCFG = AD1PCFG & (~(1 << AN_BATT));
+}
+
 void sys_init_pic24_ports()
 {
 #if defined(ENABLE_4_MHZ)
@@ -414,6 +440,7 @@ void sys_init_pic24_ports()
 #endif
     
     InitPorts();
+    init_intern_adc();
 
 #if defined(ENABLE_IMU)
     InitIMU();
@@ -745,6 +772,19 @@ static void disable_ext_adc_io()
   RPINR20bits.SDI1R = 10;
   SPI1STATbits.SPIEN = 1; // turn on SPI
 }
+
+uint8 get_battery_voltage()
+{
+    uint8 r;
+    AD1CON1bits.SAMP = 0;
+    while (!AD1CON1bits.DONE); //wait until conversion is done
+    r = (ADC1BUF0 >> 3);
+    AD1CON1bits.SAMP = 1;
+    return r;
+}
+
+
+
 
 static int32 ext_adc_data_avg_accum = 0;
 //static int16 ext_adc_data_last_sample = 0;
