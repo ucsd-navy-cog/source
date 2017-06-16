@@ -58,7 +58,7 @@ static void sensor_loop()
 #if defined(ENABLE_IMU)
   IMU_DATA_STATE imu_data;
 #endif
-  //uint32 cm_delay = 2000; // us -- initialize to a really large value (1/2 interval) - it'll result in an initial jump is power, then followed by really low power drop until CM comes back online.
+  uint32 cm_delay = 2000; // us -- initialize to a really large value (1/2 interval) - it'll result in an initial jump is power, then followed by really low power drop until CM comes back online.
 #if defined(ENABLE_TIME_REPORTING)
   static uint16 timer = 0;
   static uint16 t_counter = 0;
@@ -66,6 +66,7 @@ static void sensor_loop()
 #endif
   uint initial_time;
   uint time_to_delay;
+  bool quit_now = false;
   //uint sync_threshold;
   //uint pr_div;
 
@@ -79,44 +80,50 @@ static void sensor_loop()
 
   // wait and listen - timed at 198 us
   while (!(net_irq_pin_active() && net_irq_rx_dr_active())) {
-//    if (sys_query_timer32() > cm_delay) { // is CM even broadcasting? Nope.
-//      net_turn_radio_off();
-//#if defined(ENABLE_EXT_ADC)
-//      if (adc_ints_en)
-//        disable_ext_adc_interrupts();
-//#endif
-//      (void)sys_cancel_timer32();
-//      // possibly turn off IMU as well, etc - esp if gyro is enabled.
-//      PR1 = 16000; // sleep for 4000 us (a whole interval)
-//      T1CONbits.TON = 1;
-//      Idle();
-//      T1CONbits.TON = 0;
-//      cm_delay = 400; // reduce final delay to save power since CM is not available.
-//      net_turn_radio_on();
-//#if defined(ENABLE_EXT_ADC)
-//      if (adc_ints_en)
-//        enable_ext_adc_interrupts();
-//#endif
-//      sys_start_timer32();
-//    }
+    if (sys_query_timer32() > cm_delay) { // is CM even broadcasting? Nope.
+      net_turn_radio_off();
+#if defined(ENABLE_EXT_ADC)
+      bool inten = are_ext_adc_interrupts_enabled();
+      if (inten)
+        disable_ext_adc_interrupts();
+#endif
+      (void)sys_cancel_timer32();
+      // possibly turn off IMU as well, etc - esp if gyro is enabled.
+      PR1 = 16000; // sleep for 4000 us (a whole interval)
+      T1CONbits.TON = 1;
+      Idle();
+      T1CONbits.TON = 0;
+      cm_delay = 400; // reduce final delay to save power since CM is not available.
+      net_turn_radio_on();
+#if defined(ENABLE_EXT_ADC)
+      if (inten)
+        enable_ext_adc_interrupts();
+#endif
+      sys_start_timer32();
+    }
   }
   
   // fix - restart after nrf24 receive interrupt occurs
-  //sys_stop_timer32();
-
-#if defined(ENABLE_EXT_ADC)
-  static int32  cm_interv_counter = 0;
-  static int    moving_delta = 0;
-  //int           temp_delta = 0; // temporary test reg only
-  bool          adc_ints_en = are_ext_adc_interrupts_enabled(); // use original state
+  sys_stop_timer32();
   
-  if (adc_ints_en && sys_query_timer32() > 16000) { // only enforce this synchron if reasonably connected else reset
-    reset_t4_interr_counter(); // reset both the 250/s counter and 12k/s counters
-    cm_interv_counter = 0;
-    moving_delta = 0;
+  if (quit_now) {
+    net_turn_radio_off();
+    return;
   }
   
-#endif
+  bool adc_ints_en = are_ext_adc_interrupts_enabled(); // use original state 
+
+//#if 0 // defined(ENABLE_EXT_ADC)
+//  static int32  cm_interv_counter = 0;
+//  static int    moving_delta = 0;
+//  //int           temp_delta = 0; // temporary test reg only
+//  
+//  if (adc_ints_en && sys_query_timer32() > 16000) { // only enforce this synchron if reasonably connected else reset
+//    reset_t4_interr_counter(); // reset both the 250/s counter and 12k/s counters
+//    cm_interv_counter = 0;
+//    moving_delta = 0;
+//  }
+//#endif
 
 
   sys_start_timer32();

@@ -555,8 +555,8 @@ void sys_cancel_timer32()
 //  PR4 = (uint)fp; // this only handles up to 64k, probably why 32000 interrupts didn't work. would need a 32 bit timer.
 //}
 
-void  enable_ext_adc_interrupts();  // re-enables ext adc interrupting
-void  disable_ext_adc_interrupts(); // disables ext adc interrupting
+//void  enable_ext_adc_interrupts();  // re-enables ext adc interrupting
+//void  disable_ext_adc_interrupts(); // disables ext adc interrupting
 
 static uint base_pr4 = 1;
 

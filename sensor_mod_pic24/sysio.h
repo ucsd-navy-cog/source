@@ -83,6 +83,9 @@ int32  get_t4_interr_counter();
 void   reset_t4_interr_counter();
 void   adjust_t4_interr_period_register(int incr); // for sync
 
+void  enable_ext_adc_interrupts();  // re-enables ext adc interrupting
+void  disable_ext_adc_interrupts(); // disables ext adc interrupting
+
 #endif
 
 
