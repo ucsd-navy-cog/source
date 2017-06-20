@@ -186,28 +186,32 @@ static void sensor_loop()
   uint8 cmd_byte = r_data[SENSOR_MODULE+1];
 
 #if defined(ENABLE_IMU)
-
   if (cmd_byte & UPDATE_IMU_ADC_FLAG) { // check for update from control module to change imu control state for this sensor
     set_imu_control_state(cmd_byte);
   }
-
-  if (get_imu_control_state()) {
-    sys_get_imu_data(&imu_data);
-  }
-  else
-    memset(&imu_data,0,sizeof(IMU_DATA_STATE));
 #endif
-
+  
 #if defined(ENABLE_EXT_ADC)
-  if (cmd_byte & UPDATE_IMU_ADC_FLAG) { // check for update from control module to change imu control state for this sensor
+  if (cmd_byte & UPDATE_IMU_ADC_FLAG) { // check for update from control module
     set_adc_control_state(cmd_byte);
   }
 #endif
 
+#if defined(ENABLE_IMU)
+  
+  memset(&imu_data,0,sizeof(IMU_DATA_STATE));
+  
+  if (get_imu_control_state()) {
+    sys_get_imu_data(&imu_data);
+  }
+  
+#endif
+
+
   // DONE: Protocol Schema
 
   s_data[0] = 0x34;
-  s_data[1] = SENSOR_MODULE;
+  s_data[1] = SENSOR_MODULE + 1;
   *(uint16*)&s_data[2] = ++counter_val;
   s_data[31] = 0x34;
 
@@ -355,16 +359,16 @@ static void sensor_loop()
   // 12400 - max
 #if defined(ENABLE_EXT_ADC)
   if (adc_ints_en) {
-    time_to_delay = time_to_delay - 195; // probably overhead for nrf read at top (~194) - OR interrupt overhead during Idle() and processing HERE -- tuned for 12k
-    sys_start_timer32();
-    PR1 = time_to_delay * FREQ_MULT; // 10100 - static for 12k
-    T1CONbits.TON = 1;
-    loop_4:
-    Idle();
-    if (sys_query_timer32() < time_to_delay)
-      goto loop_4;
-    T1CONbits.TON = 0;
-    sys_cancel_timer32();
+//    time_to_delay = time_to_delay - 195; // probably overhead for nrf read at top (~194) - OR interrupt overhead during Idle() and processing HERE -- tuned for 12k
+//    sys_start_timer32();
+//    PR1 = time_to_delay * FREQ_MULT; // 10100 - static for 12k
+//    T1CONbits.TON = 1;
+//    loop_4:
+//    Idle();
+//    if (sys_query_timer32() < time_to_delay)
+//      goto loop_4;
+//    T1CONbits.TON = 0;
+//    sys_cancel_timer32();
   }
   else {
 #endif
@@ -373,12 +377,12 @@ static void sensor_loop()
     Idle();
     T1CONbits.TON = 0;
     
-//    PR1 = (time_to_delay * FREQ_MULT) / 16; // dev ref: 11904... 11800
-//    CLKDIVbits.RCDIV = 4;
-//    T1CONbits.TON = 1;
-//    Idle();
-//    CLKDIVbits.RCDIV = 0; // 0= 8mhz, 1=4mhz etc
-//    T1CONbits.TON = 0;
+////    PR1 = (time_to_delay * FREQ_MULT) / 16; // dev ref: 11904... 11800
+////    CLKDIVbits.RCDIV = 4;
+////    T1CONbits.TON = 1;
+////    Idle();
+////    CLKDIVbits.RCDIV = 0; // 0= 8mhz, 1=4mhz etc
+////    T1CONbits.TON = 0;
     
 #if defined(ENABLE_EXT_ADC)
   }
