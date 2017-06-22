@@ -73,7 +73,9 @@ void __attribute__((__interrupt__, __auto_psv__)) _INT1Interrupt(void)
   if(system_power_on == 1)
   {
     // DISABLE INTERRUPTS HERE
-    // disable_ext_adc_interrupts(); -- not sure this is valid on power cycle since sys_init_timer_4_inter() called later in main()
+    IEC1bits.INT1IE = 0;
+    IEC1bits.T4IE = 0; 
+
     WriteIMUReg(0x6B, 0x81); // TURN IMU OFF
     IMU_CS = 1;
 
@@ -113,7 +115,7 @@ static void WriteIMUReg(int addr, int dat)
 #endif
 
   //switchSPIModeIMU();
-  IEC1bits.INT1IE = 0;
+  //IEC1bits.INT1IE = 0;
 #if 0 // defined(ENABLE_EXT_ADC)  
   if (adc_en)
     IEC1bits.T4IE = 0;      // enable timer4 interrupts
@@ -132,7 +134,7 @@ static void WriteIMUReg(int addr, int dat)
   imu_dat = SPI1BUF;
 
   IMU_CS = 1;
-  IEC1bits.INT1IE = 1;
+  //IEC1bits.INT1IE = 1;
 #if 0 // defined(ENABLE_EXT_ADC)  
   if (adc_en)
     IEC1bits.T4IE = 1;      // enable timer4 interrupts
@@ -153,7 +155,7 @@ static uint ReadIMUReg(int addr)
 #endif
   
   //switchSPIModeIMU();
-  IEC1bits.INT1IE = 0;
+  //IEC1bits.INT1IE = 0;
 #if 0 // defined(ENABLE_EXT_ADC)
   if (adc_en)
     IEC1bits.T4IE = 0;      // disable timer4 interrupts
@@ -174,7 +176,7 @@ static uint ReadIMUReg(int addr)
   imu_dat = SPI1BUF;
 
   IMU_CS = 1;
-  IEC1bits.INT1IE = 1;
+  //IEC1bits.INT1IE = 1;
 #if 0 // defined(ENABLE_EXT_ADC)  
   if (adc_en)
     IEC1bits.T4IE = 1;      // enable timer4 interrupts
@@ -647,32 +649,61 @@ void set_imu_control_state( uint8 imu_cs )
   imu_adc_control_state |= new_cs;
 }
 
+static IMU_DATA_STATE imu_interr_state = {0};
+
 void sys_get_imu_data(IMU_DATA_STATE * imu_data_out)
 {
   // CLOCKED: 158 us -- approx 10 us each
 
 #if !defined(SPOOF_IMU_DATA)
-    if (imu_adc_control_state & ACTIVE_IMU_ACC) {
-        imu_data_out->acc_x_msb = (uint8)ReadIMUReg(0x3B);
-        imu_data_out->acc_x_lsb = (uint8)ReadIMUReg(0x3C);
-        imu_data_out->acc_y_msb = (uint8)ReadIMUReg(0x3D);
-        imu_data_out->acc_y_lsb = (uint8)ReadIMUReg(0x3E);
-        imu_data_out->acc_z_msb = (uint8)ReadIMUReg(0x3F);
-        imu_data_out->acc_z_lsb = (uint8)ReadIMUReg(0x40);
-    }
+    
+    if (!are_ext_adc_interrupts_enabled()) {
+        if (imu_adc_control_state & ACTIVE_IMU_ACC) {
+            imu_data_out->acc_x_msb = (uint8)ReadIMUReg(0x3B);
+            imu_data_out->acc_x_lsb = (uint8)ReadIMUReg(0x3C);
+            imu_data_out->acc_y_msb = (uint8)ReadIMUReg(0x3D);
+            imu_data_out->acc_y_lsb = (uint8)ReadIMUReg(0x3E);
+            imu_data_out->acc_z_msb = (uint8)ReadIMUReg(0x3F);
+            imu_data_out->acc_z_lsb = (uint8)ReadIMUReg(0x40);
+        }
 
-    if (imu_adc_control_state & ACTIVE_IMU_GYRO) {
-        imu_data_out->gyro_x_msb = (uint8)ReadIMUReg(0x43);
-        imu_data_out->gyro_x_lsb = (uint8)ReadIMUReg(0x44);
-        imu_data_out->gyro_y_msb = (uint8)ReadIMUReg(0x45);
-        imu_data_out->gyro_y_lsb = (uint8)ReadIMUReg(0x46);
-        imu_data_out->gyro_z_msb = (uint8)ReadIMUReg(0x47);
-        imu_data_out->gyro_z_lsb = (uint8)ReadIMUReg(0x48);
-    }
+        if (imu_adc_control_state & ACTIVE_IMU_GYRO) {
+            imu_data_out->gyro_x_msb = (uint8)ReadIMUReg(0x43);
+            imu_data_out->gyro_x_lsb = (uint8)ReadIMUReg(0x44);
+            imu_data_out->gyro_y_msb = (uint8)ReadIMUReg(0x45);
+            imu_data_out->gyro_y_lsb = (uint8)ReadIMUReg(0x46);
+            imu_data_out->gyro_z_msb = (uint8)ReadIMUReg(0x47);
+            imu_data_out->gyro_z_lsb = (uint8)ReadIMUReg(0x48);
+        }
 
-    if (imu_adc_control_state & ACTIVE_IMU_TEMP) {
-        imu_data_out->brd_temp_msb = (uint8)ReadIMUReg(0x41);
-        imu_data_out->brd_temp_lsb = (uint8)ReadIMUReg(0x42);
+        if (imu_adc_control_state & ACTIVE_IMU_TEMP) {
+            imu_data_out->brd_temp_msb = (uint8)ReadIMUReg(0x41);
+            imu_data_out->brd_temp_lsb = (uint8)ReadIMUReg(0x42);
+        }        
+    }
+    else {
+        if (imu_adc_control_state & ACTIVE_IMU_ACC) {
+            imu_data_out->acc_x_msb = imu_interr_state.acc_x_msb;
+            imu_data_out->acc_x_lsb = imu_interr_state.acc_x_lsb;
+            imu_data_out->acc_y_msb = imu_interr_state.acc_y_msb;
+            imu_data_out->acc_y_lsb = imu_interr_state.acc_y_lsb;
+            imu_data_out->acc_z_msb = imu_interr_state.acc_z_msb;
+            imu_data_out->acc_z_lsb = imu_interr_state.acc_z_lsb;
+        }
+
+        if (imu_adc_control_state & ACTIVE_IMU_GYRO) {
+            imu_data_out->gyro_x_msb = imu_interr_state.gyro_x_msb;
+            imu_data_out->gyro_x_lsb = imu_interr_state.gyro_x_lsb;
+            imu_data_out->gyro_y_msb = imu_interr_state.gyro_y_msb;
+            imu_data_out->gyro_y_lsb = imu_interr_state.gyro_y_lsb;
+            imu_data_out->gyro_z_msb = imu_interr_state.gyro_z_msb;
+            imu_data_out->gyro_z_lsb = imu_interr_state.gyro_z_lsb;
+        }
+
+        if (imu_adc_control_state & ACTIVE_IMU_TEMP) {
+            imu_data_out->brd_temp_msb = imu_interr_state.brd_temp_msb;
+            imu_data_out->brd_temp_lsb = imu_interr_state.brd_temp_lsb;
+        }        
     }
 
 #else
@@ -784,18 +815,30 @@ static void disable_ext_adc_io()
   SPI1STATbits.SPIEN = 1; // turn on SPI
 }
 
+static uint8 batt_volt_interr_state = 0;
+
 uint8 get_battery_voltage()
 {
-    uint8 r;
-    AD1CON1bits.SAMP = 0;
-    while (!AD1CON1bits.DONE); //wait until conversion is done
-    r = (ADC1BUF0 >> 3);
-    AD1CON1bits.SAMP = 1;
-    return r;
+    if (!are_ext_adc_interrupts_enabled()) {       
+        uint8 r;
+        AD1CON1bits.SAMP = 0;
+        while (!AD1CON1bits.DONE); //wait until conversion is done
+        r = (ADC1BUF0 >> 3);
+        AD1CON1bits.SAMP = 1;
+        return r;
+    }
+    else {
+        return batt_volt_interr_state;
+    }    
 }
 
-
-
+void prep_battery_voltage()
+{
+    if (!are_ext_adc_interrupts_enabled()) {
+        AD1CON1bits.SAMP = 0;
+    }
+        
+}
 
 static int32 ext_adc_data_avg_accum = 0;
 //static int16 ext_adc_data_last_sample = 0;
@@ -812,19 +855,19 @@ static uint adc_base_count_ceiling = ((BASE_TIMER4_INT_FREQ_HZ / EXPECT_CM_INTER
 static bool  adc_interrupts_enabled = false;
 
 // used for adaptive adjustment of 12k freq
-static int32 t4_interupt_counter = 0;
-int32 get_t4_interr_counter()
-{
-  return t4_interupt_counter;
-}
-void reset_t4_interr_counter()
-{
-  t4_interupt_counter = 0;
-}
-void adjust_t4_interr_period_register(int incr)
-{
-  PR4 = (uint)((int)base_pr4 + incr);
-}
+//static int32 t4_interupt_counter = 0;
+//int32 get_t4_interr_counter()
+//{
+//  return t4_interupt_counter;
+//}
+//void reset_t4_interr_counter()
+//{
+//  t4_interupt_counter = 0;
+//}
+//void adjust_t4_interr_period_register(int incr)
+//{
+//  PR4 = (uint)((int)base_pr4 + incr);
+//}
 
 static bool process_interr_ext_adc_samples()
 {
@@ -845,12 +888,11 @@ static bool process_interr_ext_adc_samples()
   
   if(sample_state == 0)
   {
-      uint foo;
       CURRENT_CTR = 1;
            
       SPI1BUF = 0;
       while(!SPI1STATbits.SPIRBF);
-      foo = SPI1BUF;//ext_1_data_average += SPI1BUF;
+      SPI1BUF;//ext_1_data_average += SPI1BUF;
       SPI1BUF = 0;
       while(!SPI1STATbits.SPIRBF);
       ext_2n_data_average += SPI1BUF;
@@ -1023,16 +1065,112 @@ static bool process_interr_ext_adc_samples()
   return false;
 }
 
+void process_interr_imu_samples()
+{
+    static int phase = 0;
+    //
+    
+//        if (imu_adc_control_state & ACTIVE_IMU_ACC) {
+//            imu_interr_state.acc_x_msb = (uint8)ReadIMUReg(0x3B);
+//            imu_interr_state.acc_x_lsb = (uint8)ReadIMUReg(0x3C);
+//            imu_interr_state.acc_y_msb = (uint8)ReadIMUReg(0x3D);
+//            imu_interr_state.acc_y_lsb = (uint8)ReadIMUReg(0x3E);
+//            imu_interr_state.acc_z_msb = (uint8)ReadIMUReg(0x3F);
+//            imu_interr_state.acc_z_lsb = (uint8)ReadIMUReg(0x40);
+//        }
+//
+//        if (imu_adc_control_state & ACTIVE_IMU_GYRO) {
+//            imu_interr_state.gyro_x_msb = (uint8)ReadIMUReg(0x43);
+//            imu_interr_state.gyro_x_lsb = (uint8)ReadIMUReg(0x44);
+//            imu_interr_state.gyro_y_msb = (uint8)ReadIMUReg(0x45);
+//            imu_interr_state.gyro_y_lsb = (uint8)ReadIMUReg(0x46);
+//            imu_interr_state.gyro_z_msb = (uint8)ReadIMUReg(0x47);
+//            imu_interr_state.gyro_z_lsb = (uint8)ReadIMUReg(0x48);
+//        }
+//
+//        if (imu_adc_control_state & ACTIVE_IMU_TEMP) {
+//            imu_interr_state.brd_temp_msb = (uint8)ReadIMUReg(0x41);
+//            imu_interr_state.brd_temp_lsb = (uint8)ReadIMUReg(0x42);
+//        }        
+    
+    switch (++phase) {
+        case 1:
+            if (imu_adc_control_state & ACTIVE_IMU_ACC)
+                imu_interr_state.acc_x_msb = (uint8)ReadIMUReg(0x3B);
+            break;
+        case 2:
+            if (imu_adc_control_state & ACTIVE_IMU_ACC)
+                imu_interr_state.acc_x_lsb = (uint8)ReadIMUReg(0x3C);
+            break;
+        case 3:
+            if (imu_adc_control_state & ACTIVE_IMU_ACC)
+                imu_interr_state.acc_y_msb = (uint8)ReadIMUReg(0x3D);
+            break;
+        case 4:
+            if (imu_adc_control_state & ACTIVE_IMU_ACC)
+                imu_interr_state.acc_y_lsb = (uint8)ReadIMUReg(0x3E);
+            break;
+        case 5:
+            if (imu_adc_control_state & ACTIVE_IMU_ACC)
+                imu_interr_state.acc_z_msb = (uint8)ReadIMUReg(0x3F);
+            break;
+        case 6:
+            if (imu_adc_control_state & ACTIVE_IMU_ACC)
+                imu_interr_state.acc_z_lsb = (uint8)ReadIMUReg(0x40);
+            break;
+        case 7:
+            if (imu_adc_control_state & ACTIVE_IMU_GYRO)
+                imu_interr_state.gyro_x_msb = (uint8)ReadIMUReg(0x43);
+            break;
+        case 8:
+            if (imu_adc_control_state & ACTIVE_IMU_GYRO)
+                imu_interr_state.gyro_x_lsb = (uint8)ReadIMUReg(0x44);                
+            break;
+        case 9:
+            if (imu_adc_control_state & ACTIVE_IMU_GYRO)
+                imu_interr_state.gyro_y_msb = (uint8)ReadIMUReg(0x45);                
+            break;
+        case 10:
+            if (imu_adc_control_state & ACTIVE_IMU_GYRO)
+                imu_interr_state.gyro_y_lsb = (uint8)ReadIMUReg(0x46);                
+            break;
+        case 11:
+            if (imu_adc_control_state & ACTIVE_IMU_GYRO)
+                imu_interr_state.gyro_z_msb = (uint8)ReadIMUReg(0x47);                
+            break;
+        case 12:
+            if (imu_adc_control_state & ACTIVE_IMU_GYRO)
+                imu_interr_state.gyro_z_lsb = (uint8)ReadIMUReg(0x48);                
+            break;
+        case 13:
+            if (imu_adc_control_state & ACTIVE_IMU_TEMP)
+                imu_interr_state.brd_temp_msb = (uint8)ReadIMUReg(0x41);
+            break;
+        case 14:
+            if (imu_adc_control_state & ACTIVE_IMU_TEMP)
+                imu_interr_state.brd_temp_lsb = (uint8)ReadIMUReg(0x42);
+            phase=0;
+            break;
+    }
+}
 
 void __attribute__((__interrupt__, __shadow__, __no_auto_psv__)) _T4Interrupt(void)
 {
 
+  // battery crap
+  AD1CON1bits.SAMP = 0;
 
-  t4_interupt_counter ++;
+  //t4_interupt_counter ++;
   
   if (process_interr_ext_adc_samples()) {
     adc_data_valid = true;
   }
+  
+  process_interr_imu_samples();
+ 
+  // battery shit
+  batt_volt_interr_state = (ADC1BUF0 >> 3);
+  AD1CON1bits.SAMP = 1;
 
   //TOGGLE_LED();
   //test_counter++;
@@ -1179,7 +1317,7 @@ bool read_ext_adc_samples_normal( int32 * sample1_out, int32 * sample2_out )
 void  enable_ext_adc_interrupts()
 {
   TMR4 = 0;
-  t4_interupt_counter = 0;
+  //t4_interupt_counter = 0;
   ext_adc_data_avg_accum = 0;
   //ext_adc_data_last_sample = 0;
   adc_data_counter = 0;

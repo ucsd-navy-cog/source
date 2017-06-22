@@ -45,16 +45,16 @@ static uint32 last_sensor_counts[4] = {0,0,0,0};
 static uint16 sensor_counter_vals[4] = {0,0,0,0};
 
 static IMU_DATA_STATE imu_data[4];
-static IMU_DATA_STATE imu_data_history[4]; // for interpolation of previous imu data
+//static IMU_DATA_STATE imu_data_history[4]; // for interpolation of previous imu data
 
 static int32 ppg_adc_data_i32[4];
-static int32 ppg_adc_data_i32_history[4];
+//static int32 ppg_adc_data_i32_history[4];
 
 static int32 resp_adc_data_i32[4];
-static int32 resp_adc_data_i32_history[4];
+//static int32 resp_adc_data_i32_history[4];
 
 static uint8 battery_volt[4];
-static uint8 battery_volt_history[4];
+//static uint8 battery_volt_history[4];
 
 static uint32 sensor_handling_ts;
 
@@ -235,10 +235,10 @@ static void get_sensor_data()
       battery_volt[sid] = (rdata[26]);
       
       //--
-      memcpy(&imu_data_history[sid],&imu_data[sid],sizeof(IMU_DATA_STATE));
-      memcpy(&ppg_adc_data_i32_history[sid],&ppg_adc_data_i32[sid],sizeof(int32));
-      memcpy(&resp_adc_data_i32_history[sid],&resp_adc_data_i32[sid],sizeof(int32));
-      memcpy(&battery_volt[sid],&imu_data[sid],sizeof(uint8));
+      //memcpy(&imu_data_history[sid],&imu_data[sid],sizeof(IMU_DATA_STATE));
+      //memcpy(&ppg_adc_data_i32_history[sid],&ppg_adc_data_i32[sid],sizeof(int32));
+      //memcpy(&resp_adc_data_i32_history[sid],&resp_adc_data_i32[sid],sizeof(int32));
+      //memcpy(&battery_volt_history[sid],&battery_volt[sid],sizeof(uint8));
       
       got_sensor_data[sid] = true;
 
@@ -415,10 +415,10 @@ void ctrl_cb(uint32 p)
     // apply interpolated fix ups for failed sensor data reads
     for (i=0;i<4;i++) {
       if (!got_sensor_data[i]) {
-        memcpy(&imu_data[i],&imu_data_history[i],sizeof(IMU_DATA_STATE));
-        memcpy(&ppg_adc_data_i32[i],&ppg_adc_data_i32_history[i],sizeof(int32));
-        memcpy(&resp_adc_data_i32[i],&resp_adc_data_i32_history[i],sizeof(int32));
-        memcpy(&battery_volt[i],&imu_data_history[i],sizeof(uint8));
+        //memcpy(&imu_data[i],&imu_data_history[i],sizeof(IMU_DATA_STATE));
+        //memcpy(&ppg_adc_data_i32[i],&ppg_adc_data_i32_history[i],sizeof(int32));
+        //memcpy(&resp_adc_data_i32[i],&resp_adc_data_i32_history[i],sizeof(int32));
+        //memcpy(&battery_volt[i],&battery_volt_history[i],sizeof(uint8));
       }
     }
     //--
@@ -451,13 +451,13 @@ int main()
 
     // initialize to a known state
     memset(imu_data,0,sizeof(IMU_DATA_STATE) * 4);
-    memset(imu_data_history,0,sizeof(IMU_DATA_STATE) * 4);
+    //memset(imu_data_history,0,sizeof(IMU_DATA_STATE) * 4);
     memset(ppg_adc_data_i32,0,sizeof(int32) * 4);
-    memset(ppg_adc_data_i32_history,0,sizeof(int32) * 4);
+    //memset(ppg_adc_data_i32_history,0,sizeof(int32) * 4);
     memset(resp_adc_data_i32,0,sizeof(int32) * 4);
-    memset(resp_adc_data_i32_history,0,sizeof(int32) * 4);
+    //memset(resp_adc_data_i32_history,0,sizeof(int32) * 4);
     memset(battery_volt,0,sizeof(uint8) * 4);
-    memset(battery_volt_history,0,sizeof(uint8) * 4);
+    //memset(battery_volt_history,0,sizeof(uint8) * 4);
 
     net_config_nRF24(0,0x01,5,0,0,NRF24_CHANNEL,
       &custom_addrs[0][0],

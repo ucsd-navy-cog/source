@@ -187,17 +187,21 @@ static void sensor_loop()
 
 #if defined(ENABLE_IMU)
   if (cmd_byte & UPDATE_IMU_ADC_FLAG) { // check for update from control module to change imu control state for this sensor
-    set_imu_control_state(cmd_byte);
+    //if ((cmd_byte & (ACTIVE_ADC_PPG|ACTIVE_IMU_ACC)) == (ACTIVE_ADC_PPG|ACTIVE_IMU_ACC))
+      set_imu_control_state(cmd_byte);
   }
 #endif
   
 #if defined(ENABLE_EXT_ADC)
   if (cmd_byte & UPDATE_IMU_ADC_FLAG) { // check for update from control module
-    set_adc_control_state(cmd_byte);
+    //if ((cmd_byte & (ACTIVE_ADC_PPG|ACTIVE_IMU_ACC)) == (ACTIVE_ADC_PPG|ACTIVE_IMU_ACC))
+      set_adc_control_state(cmd_byte);
   }
 #endif
 
 #if defined(ENABLE_IMU)
+  
+  //prep_battery_voltage();
   
   memset(&imu_data,0,sizeof(IMU_DATA_STATE));
   
@@ -234,9 +238,6 @@ static void sensor_loop()
   s_data[17] = imu_data.brd_temp_lsb;
     
 #endif
-
-  //s_data[29] = (temp_delta >> 8) & 0xFF;
-  //s_data[30] = temp_delta & 0xFF;
 
 #if defined(ENABLE_EXT_ADC)
   if (adc_ints_en) {
@@ -279,6 +280,9 @@ static void sensor_loop()
   
   // 27-30 available, 29-30 used for internal debugging
 
+  //s_data[29] = (temp_delta >> 8) & 0xFF;
+  //s_data[30] = temp_delta & 0xFF;
+  
 #if defined(ENABLE_TIME_REPORTING)
   // defer to next iteration
   if (send_timer) {
@@ -331,6 +335,7 @@ static void sensor_loop()
   // wait for transmission to complete
   // takes approx 286 us
   while (!(net_irq_pin_active() && net_irq_tx_ds_or_max_rt_active()));
+  //DELAY_US(290);
 
   // turn off asap
   net_turn_radio_off();
@@ -372,10 +377,10 @@ static void sensor_loop()
   }
   else {
 #endif
-    PR1 = (time_to_delay * FREQ_MULT); // dev ref: 11904... 11800
-    T1CONbits.TON = 1;
-    Idle();
-    T1CONbits.TON = 0;
+//    PR1 = (time_to_delay * FREQ_MULT); // dev ref: 11904... 11800
+//    T1CONbits.TON = 1;
+//    Idle();
+//    T1CONbits.TON = 0;
     
 ////    PR1 = (time_to_delay * FREQ_MULT) / 16; // dev ref: 11904... 11800
 ////    CLKDIVbits.RCDIV = 4;

@@ -79,14 +79,15 @@ bool  are_ext_adc_interrupts_enabled(); // runtime check to see if ext adc inter
 
 bool  read_ext_adc_samples_normal(int32 * sample1_out, int32 * sample2_out); // called once every 4ms (250/s)
 
-int32  get_t4_interr_counter();
-void   reset_t4_interr_counter();
-void   adjust_t4_interr_period_register(int incr); // for sync
+//int32  get_t4_interr_counter();
+//void   reset_t4_interr_counter();
+//void   adjust_t4_interr_period_register(int incr); // for sync
 
 void  enable_ext_adc_interrupts();  // re-enables ext adc interrupting
 void  disable_ext_adc_interrupts(); // disables ext adc interrupting
 
 uint8 get_battery_voltage();
+void prep_battery_voltage();
 
 #endif
 
