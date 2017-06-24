@@ -121,10 +121,6 @@ static void sensor_loop()
 //  }
 //#endif
 
-  if (!adc_ints_en)
-    prep_battery_voltage_sampling();
-
-
   sys_start_timer32();
 
   net_turn_radio_off(); // turn off radio asap
@@ -145,6 +141,9 @@ static void sensor_loop()
     goto fail;
   }
 
+  if (!adc_ints_en)
+    prep_battery_voltage_sampling();
+  
 #if 0 // defined(ENABLE_EXT_ADC)
   if (adc_ints_en) { // only check on valid packets - e.g. after fail test above
     int32 lc = get_t4_interr_counter();
