@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <project>
-  <executable name="dist/default/production/sensor_mod_pic24.production.elf">
+  <executable name="dist/default/production/sensor_mod_pic24_DEBUG_ACC.production.elf">
     <memory name="data">
       <units>bytes</units>
       <length>8192</length>
@@ -11,8 +11,8 @@
     <memory name="program">
       <units>bytes</units>
       <length>65268</length>
-      <used>11409</used>
-      <free>53859</free>
+      <used>11412</used>
+      <free>53856</free>
     </memory>
   </executable>
 </project>

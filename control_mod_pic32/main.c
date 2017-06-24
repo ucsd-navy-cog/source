@@ -7,7 +7,8 @@
 #define REPORT_INTERVAL       (4000)
 #define CONTROL_MODULE_TIMING (4000.0) // becareful with modifying this.. there may be some new untested side effects now..
 #define NRF24_CHANNEL         (99)  // 0-125 mhz (2.4 - 2.525)
-#define TX_PAYLOAD_SIZE       (6)   // to sensors - should match stream_XXX_bytes_w() below
+//#define TX_PAYLOAD_SIZE       (6)   // to sensors - should match stream_XXX_bytes_w() below
+#define TX_PAYLOAD_SIZE       (10)   // to sensors - should match stream_XXX_bytes_w() below
 
 #define SENSOR_CUTOFF         (800) // (CONTROL_MODULE_TIMING - SENSOR_CUTOFF) == is the real time point that the CM cuts off waiting for responses from sensors. Sensor 3 is esp sensitive to this.
                                     // subtracted delta (in us) should be sufficient for uploading data to Presentation Module. UPDATE. we need to speed up upload... -100 to -200 deficit.
@@ -20,7 +21,8 @@
                              RB(v,16); RB(v,17); RB(v,18); RB(v,19); RB(v,20); RB(v,21); RB(v,22); RB(v,23);\
                              RB(v,24); RB(v,25); RB(v,26); RB(v,27); RB(v,28); RB(v,29); RB(v,30); RB(v,31);
 // should match TX_PAYLOAD_SIZE
-#define stream_6_bytes_w(v)  SB(v,0); SB(v,1); SB(v,2); SB(v,3); SB(v,4); SB(v,5);
+//#define stream_6_bytes_w(v)  SB(v,0); SB(v,1); SB(v,2); SB(v,3); SB(v,4); SB(v,5);
+#define stream_10_bytes_w(v)  SB(v,0); SB(v,1); SB(v,2); SB(v,3); SB(v,4); SB(v,5); SB(v,6); SB(v,7); SB(v,8); SB(v,9);
 
 static uint8 custom_addrs[6][5] = {
 #if 0
@@ -45,21 +47,20 @@ static uint32 last_sensor_counts[4] = {0,0,0,0};
 static uint16 sensor_counter_vals[4] = {0,0,0,0};
 
 static IMU_DATA_STATE imu_data[4];
-//static IMU_DATA_STATE imu_data_history[4]; // for interpolation of previous imu data
+static IMU_DATA_STATE imu_data_history[4]; // for interpolation of previous imu data
 
 static int32 ppg_adc_data_i32[4];
-//static int32 ppg_adc_data_i32_history[4];
+static int32 ppg_adc_data_i32_history[4];
 
 static int32 resp_adc_data_i32[4];
-//static int32 resp_adc_data_i32_history[4];
+static int32 resp_adc_data_i32_history[4];
 
 static uint8 battery_volt[4];
-//static uint8 battery_volt_history[4];
+static uint8 battery_volt_history[4];
 
 static uint32 sensor_handling_ts;
 
 //static uint8 rdata[32];
-
 //static int32 spoof_temp[4] = {0};
 
 static void report_counter(uint32 factor_denom)
@@ -120,6 +121,10 @@ static void notify_sensors() // broadcast to common address for all available se
   sdata[2] = 0x00; // set IMU state for SM1
   sdata[3] = 0x00; // set IMU state for SM2
   sdata[4] = 0x00; // set IMU state for SM3
+  sdata[5] = 0x00; // set IMU state for SM3
+  sdata[6] = 0x00; // set IMU state for SM2
+  sdata[7] = 0x00; // set IMU state for SM1
+  sdata[8] = 0x00; // set IMU state for SM0
   //--
 
   // Read command bytes from PM (presentation module)
@@ -139,12 +144,14 @@ static void notify_sensors() // broadcast to common address for all available se
       sb |= ACTIVE_ADC_PPG;
     if (cb & CMD_SET_RESP)
       sb |= ACTIVE_ADC_RESP;
-    sdata[sid+1]  = sb;
+    sdata[sid+1] = sb;
+    sdata[TX_PAYLOAD_SIZE-sid-2] = sb;
     // sdata[sid+1]  = UPDATE_IMU_ADC_FLAG | ACTIVE_IMU_GYRO | ACTIVE_IMU_ACC | ACTIVE_IMU_TEMP | ACTIVE_ADC_PPG;  -- TESTING ONLY
   }
 
   net_queue_transmit_begin();
-  stream_6_bytes_w(sdata);
+  //stream_6_bytes_w(sdata);
+  stream_10_bytes_w(sdata);
   net_queue_transmit_end();
   net_turn_radio_on();
 
@@ -235,10 +242,10 @@ static void get_sensor_data()
       battery_volt[sid] = (rdata[26]);
       
       //--
-      //memcpy(&imu_data_history[sid],&imu_data[sid],sizeof(IMU_DATA_STATE));
-      //memcpy(&ppg_adc_data_i32_history[sid],&ppg_adc_data_i32[sid],sizeof(int32));
-      //memcpy(&resp_adc_data_i32_history[sid],&resp_adc_data_i32[sid],sizeof(int32));
-      //memcpy(&battery_volt_history[sid],&battery_volt[sid],sizeof(uint8));
+      memcpy(&imu_data_history[sid],&imu_data[sid],sizeof(IMU_DATA_STATE));
+      memcpy(&ppg_adc_data_i32_history[sid],&ppg_adc_data_i32[sid],sizeof(int32));
+      memcpy(&resp_adc_data_i32_history[sid],&resp_adc_data_i32[sid],sizeof(int32));
+      memcpy(&battery_volt_history[sid],&battery_volt[sid],sizeof(uint8));
       
       got_sensor_data[sid] = true;
 
@@ -375,8 +382,8 @@ static void upload_sensor_data()
   // footer - 4 bytes
   buffer[i++] = 0x12;
   
-  //buffer[i++] = 0x12;
-  buffer[i++] = (battery_volt[0]);
+  buffer[i++] = 0x12;
+  //buffer[i++] = battery_volt[0];
 
   buffer[i++] = 0x00;
   buffer[i++] = 0x00;
@@ -415,10 +422,10 @@ void ctrl_cb(uint32 p)
     // apply interpolated fix ups for failed sensor data reads
     for (i=0;i<4;i++) {
       if (!got_sensor_data[i]) {
-        //memcpy(&imu_data[i],&imu_data_history[i],sizeof(IMU_DATA_STATE));
-        //memcpy(&ppg_adc_data_i32[i],&ppg_adc_data_i32_history[i],sizeof(int32));
-        //memcpy(&resp_adc_data_i32[i],&resp_adc_data_i32_history[i],sizeof(int32));
-        //memcpy(&battery_volt[i],&battery_volt_history[i],sizeof(uint8));
+        memcpy(&imu_data[i],&imu_data_history[i],sizeof(IMU_DATA_STATE));
+        memcpy(&ppg_adc_data_i32[i],&ppg_adc_data_i32_history[i],sizeof(int32));
+        memcpy(&resp_adc_data_i32[i],&resp_adc_data_i32_history[i],sizeof(int32));
+        memcpy(&battery_volt[i],&battery_volt_history[i],sizeof(uint8));
       }
     }
     //--
@@ -451,13 +458,13 @@ int main()
 
     // initialize to a known state
     memset(imu_data,0,sizeof(IMU_DATA_STATE) * 4);
-    //memset(imu_data_history,0,sizeof(IMU_DATA_STATE) * 4);
+    memset(imu_data_history,0,sizeof(IMU_DATA_STATE) * 4);
     memset(ppg_adc_data_i32,0,sizeof(int32) * 4);
-    //memset(ppg_adc_data_i32_history,0,sizeof(int32) * 4);
+    memset(ppg_adc_data_i32_history,0,sizeof(int32) * 4);
     memset(resp_adc_data_i32,0,sizeof(int32) * 4);
-    //memset(resp_adc_data_i32_history,0,sizeof(int32) * 4);
+    memset(resp_adc_data_i32_history,0,sizeof(int32) * 4);
     memset(battery_volt,0,sizeof(uint8) * 4);
-    //memset(battery_volt_history,0,sizeof(uint8) * 4);
+    memset(battery_volt_history,0,sizeof(uint8) * 4);
 
     net_config_nRF24(0,0x01,5,0,0,NRF24_CHANNEL,
       &custom_addrs[0][0],

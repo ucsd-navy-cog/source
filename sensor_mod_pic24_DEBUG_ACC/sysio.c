@@ -290,6 +290,8 @@ static void InitIMU()
   }
   else
   {
+//    WriteIMUReg(0x6B, 0x81); // TURN IMU OFF
+    
     IMUPWRON();
     //--
     //IMUACCLOWPWREnable();
@@ -447,6 +449,7 @@ void sys_init_pic24_ports()
     init_intern_adc();
 
 #if defined(ENABLE_IMU)
+    
     InitIMU();
 #else
     IMUPWROFF();
@@ -820,7 +823,6 @@ static uint8 batt_volt_interr_state = 0;
 void prep_battery_voltage_sampling()
 {
    AD1CON1bits.SAMP = 0;
-   
 }
 
 void finish_battery_voltage_sampling()

@@ -72,12 +72,12 @@ static void sensor_loop()
   //uint pr_div;
 
   // POWER SAVING IDLE() REMOVED FROM HERE... Not much savings anyway and addresses the issue with predictable timing afterwards.
-
+    
   net_turn_radio_on(); // approx 11 us
 
-#if defined(ENABLE_EXT_ADC)
-  sys_start_timer32();  // not compatible with code right below here
-#endif
+//#if defined(ENABLE_EXT_ADC)
+  sys_start_timer32();  // not compatible with code right below here ??
+//#endif
 
   // wait and listen - timed at 198 us
   while (!(net_irq_pin_active() && net_irq_rx_dr_active())) {
@@ -90,7 +90,7 @@ static void sensor_loop()
 #endif
       (void)sys_cancel_timer32();
       // possibly turn off IMU as well, etc - esp if gyro is enabled.
-      PR1 = 16000; // sleep for 4000 us (a whole interval)
+      PR1 = 4000 * FREQ_MULT; // sleep for 4000 us (a whole interval)
       T1CONbits.TON = 1;
       Idle();
       T1CONbits.TON = 0;
@@ -121,14 +121,10 @@ static void sensor_loop()
 //  }
 //#endif
 
-  if (!adc_ints_en)
-    prep_battery_voltage_sampling();
-
-
   sys_start_timer32();
-
+  
   net_turn_radio_off(); // turn off radio asap
-
+   
   // clear: control TX -> sensor RX
   memset(r_data,0,RX_PAYLOAD_SIZE);
 
@@ -144,7 +140,10 @@ static void sensor_loop()
   if (r_data[0] != 0x34 || r_data[RX_PAYLOAD_SIZE-1] != 0x34) {
     goto fail;
   }
-
+    
+  if (!adc_ints_en)
+    prep_battery_voltage_sampling(); 
+  
 #if 0 // defined(ENABLE_EXT_ADC)
   if (adc_ints_en) { // only check on valid packets - e.g. after fail test above
     int32 lc = get_t4_interr_counter();
@@ -277,13 +276,12 @@ static void sensor_loop()
   }
     
 #endif
-
-
+  
   //get_battery_voltage
   if (!adc_ints_en)
       finish_battery_voltage_sampling();
   s_data[26] = get_battery_voltage_val();
-  
+    
   // 27-30 available, 29-30 used for internal debugging
 
   //s_data[29] = (temp_delta >> 8) & 0xFF;
@@ -305,7 +303,7 @@ static void sensor_loop()
   net_queue_transmit_end();
    
   initial_time = sys_query_timer32();
-
+  
   // sync to a real time slot for this sensor
   if (initial_time <= SENSOR_OFFSET - 40) {
 
@@ -347,7 +345,7 @@ static void sensor_loop()
   net_turn_radio_off();
 
   fail:;
-
+  
   net_clear_all_irqs();
   net_clear_tx_fifo();
 
@@ -449,7 +447,6 @@ int main()
     //--
     sensor_loop();
     //--
-
   }
  
   return 0;

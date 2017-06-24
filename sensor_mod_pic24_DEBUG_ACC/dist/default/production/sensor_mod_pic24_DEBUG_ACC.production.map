@@ -6,7 +6,7 @@ Tool Name:
 Command:
   -p24FJ64GA102 \
   -o \
-  dist/default/production/sensor_mod_pic24.production.elf \
+  dist/default/production/sensor_mod_pic24_DEBUG_ACC.production.elf \
   -Lc:/program files (x86)/microchip/xc16/v1.26/bin/bin/.. \
   -Lc:/program files (x86)/microchip/xc16/v1.26/bin/bin/../../lib \
   -Lc:/program files (x86)/microchip/xc16/v1.26/bin/bin/../../support/PIC24E/gld \
@@ -31,7 +31,7 @@ Command:
   --stackguard=16 \
   --no-force-link \
   --smart-io \
-  -Map=dist/default/production/sensor_mod_pic24.production.map \
+  -Map=dist/default/production/sensor_mod_pic24_DEBUG_ACC.production.map \
   --report-mem \
   --memorysummary \
   dist/default/production/memoryfile.xml \
@@ -87,12 +87,12 @@ section                    address   length (PC units)   length (bytes) (dec)
 -------                    -------   -----------------   --------------------
 .text                        0x200               0xbae          0x1185  (4485)
 .const                       0xdae                 0x8             0xc  (12)
-.text                        0xdb6              0x10e8          0x195c  (6492)
-.dinit                      0x1e9e                0xfa           0x177  (375)
-.init.delay32               0x1f98                0x1c            0x2a  (42)
-.shared.dinit               0x1fb4                 0x2             0x3  (3)
+.text                        0xdb6              0x10ea          0x195f  (6495)
+.dinit                      0x1ea0                0xfa           0x177  (375)
+.init.delay32               0x1f9a                0x1c            0x2a  (42)
+.shared.dinit               0x1fb6                 0x2             0x3  (3)
 
-                 Total program memory used (bytes):         0x2c91  (11409) 17%
+                 Total program memory used (bytes):         0x2c94  (11412) 17%
 
 
 Ivt Memory  [Origin = 0x4, Length = 0xfc]
@@ -206,8 +206,8 @@ External Symbols in Program Memory (by address):
                   0x001930                  _net_irq_max_rt_active
                   0x001944                  _net_irq_tx_ds_or_max_rt_active
                   0x00195a                  _net_set_rx0_tx_addr
-                  0x001e1c                  _main
-                  0x001f98                  ___delay32
+                  0x001e1e                  _main
+                  0x001f9a                  ___delay32
 
 External Symbols in Program Memory (by name):
 
@@ -216,7 +216,7 @@ External Symbols in Program Memory (by name):
                   0x000f9a                  __INT1Interrupt
                   0x001026                  __T1Interrupt
                   0x0011f6                  __T4Interrupt
-                  0x001f98                  ___delay32
+                  0x001f9a                  ___delay32
                   0x000c5c                  ___divdi3
                   0x000cbc                  ___moddi3
                   0x000d18                  ___muldi3
@@ -240,7 +240,7 @@ External Symbols in Program Memory (by name):
                   0x0010ec                  _finish_battery_voltage_sampling
                   0x0010fa                  _get_battery_voltage_val
                   0x0010a4                  _get_imu_control_state
-                  0x001e1c                  _main
+                  0x001e1e                  _main
                   0x001424                  _net_config_nRF24
                   0x0013d4                  _net_init_nRF24_ports
                   0x001930                  _net_irq_max_rt_active
@@ -394,18 +394,18 @@ __CONFIG1
 .comment
  *(.comment)
 
-.debug_info       0x000000        0x8b9
+.debug_info       0x000000        0x8c5
  *(.debug_info)
- .debug_info      0x000000        0x8b9 build/default/production/main.o
+ .debug_info      0x000000        0x8c5 build/default/production/main.o
  *(.gnu.linkonce.wi.*)
 
 .debug_abbrev     0x000000        0x18a
  *(.debug_abbrev)
  .debug_abbrev    0x000000        0x18a build/default/production/main.o
 
-.debug_line       0x000000        0x151
+.debug_line       0x000000        0x150
  *(.debug_line)
- .debug_line      0x000000        0x151 build/default/production/main.o
+ .debug_line      0x000000        0x150 build/default/production/main.o
 
 .debug_frame      0x000000         0x8a
  *(.debug_frame)
@@ -1137,7 +1137,7 @@ LOAD c:/program files (x86)/microchip/xc16/v1.26/bin/bin/../../lib\libpic30-elf.
 LOAD c:/program files (x86)/microchip/xc16/v1.26/bin/bin/../../lib\libm-elf.a
 LOAD c:/program files (x86)/microchip/xc16/v1.26/bin/bin/../../lib\libc-elf.a
 END GROUP
-OUTPUT(dist/default/production/sensor_mod_pic24.production.elf elf32-pic30)
+OUTPUT(dist/default/production/sensor_mod_pic24_DEBUG_ACC.production.elf elf32-pic30)
 LOAD default_isr
 LOAD data_init
 LOAD shared_data_init
@@ -1255,7 +1255,7 @@ __c30_signature
  .const             0x8db4          0x2 build/default/production/main.o
                     0x8db4                  _SENSOR_OFFSET
 
-.text             0x000db6       0x10e8
+.text             0x000db6       0x10ea
  .text            0x000db6        0x61e build/default/production/sysio.o
                   0x000f9a                  __INT1Interrupt
                   0x000fce                  _sys_handle_power_button
@@ -1294,15 +1294,15 @@ __c30_signature
                   0x001930                  _net_irq_max_rt_active
                   0x001944                  _net_irq_tx_ds_or_max_rt_active
                   0x00195a                  _net_set_rx0_tx_addr
- .text            0x0019e4        0x4ba build/default/production/main.o
-                  0x001e1c                  _main
+ .text            0x0019e4        0x4bc build/default/production/main.o
+                  0x001e1e                  _main
 
-.dinit            0x001e9e         0xfa
- .dinit           0x001e9e         0xfa data_init
+.dinit            0x001ea0         0xfa
+ .dinit           0x001ea0         0xfa data_init
 
-.init.delay32     0x001f98         0x1c
- .init.delay32    0x001f98         0x1c c:/program files (x86)/microchip/xc16/v1.26/bin/bin/../../lib\libpic30-elf.a(delay32.eo)
-                  0x001f98                  ___delay32
+.init.delay32     0x001f9a         0x1c
+ .init.delay32    0x001f9a         0x1c c:/program files (x86)/microchip/xc16/v1.26/bin/bin/../../lib\libpic30-elf.a(delay32.eo)
+                  0x001f9a                  ___delay32
 
-.shared.dinit     0x001fb4          0x2
- .shared.dinit    0x001fb4          0x2 shared_data_init
+.shared.dinit     0x001fb6          0x2
+ .shared.dinit    0x001fb6          0x2 shared_data_init
