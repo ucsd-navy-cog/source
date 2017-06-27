@@ -83,11 +83,11 @@ section                    address   length (PC units)   length (bytes) (dec)
 -------                    -------   -----------------   --------------------
 .text                        0x200               0x7cc           0xbb2  (2994)
 .const                       0x9cc                 0x8             0xc  (12)
-.text                        0x9d4              0x10d4          0x193e  (6462)
-.dinit                      0x1aa8                0xaa            0xff  (255)
-.init.delay32               0x1b52                0x1c            0x2a  (42)
+.text                        0x9d4              0x1106          0x1989  (6537)
+.dinit                      0x1ada                0xaa            0xff  (255)
+.init.delay32               0x1b84                0x1c            0x2a  (42)
 
-                 Total program memory used (bytes):         0x2625  (9765) 14%
+                 Total program memory used (bytes):         0x2670  (9840) 15%
 
 
 Ivt Memory  [Origin = 0x4, Length = 0xfc]
@@ -194,8 +194,8 @@ External Symbols in Program Memory (by address):
                   0x0014dc                  _are_ext_adc_interrupts_enabled
                   0x0014e0                  _set_adc_control_state
                   0x001514                  _sys_get_imu_data
-                  0x001a26                  _main
-                  0x001b52                  ___delay32
+                  0x001a58                  _main
+                  0x001b84                  ___delay32
 
 External Symbols in Program Memory (by name):
 
@@ -204,7 +204,7 @@ External Symbols in Program Memory (by name):
                   0x0011c0                  __INT1Interrupt
                   0x00124c                  __T1Interrupt
                   0x001412                  __T4Interrupt
-                  0x001b52                  ___delay32
+                  0x001b84                  ___delay32
                   0x0009c0                  ___mulp32eds3
                   0x0009c0                  ___mulp32peds3
                   0x0009c0                  ___mulsi3
@@ -221,7 +221,7 @@ External Symbols in Program Memory (by name):
                   0x001308                  _finish_battery_voltage_sampling
                   0x001316                  _get_battery_voltage_val
                   0x0012c0                  _get_imu_control_state
-                  0x001a26                  _main
+                  0x001a58                  _main
                   0x000a20                  _net_config_nRF24
                   0x0009d4                  _net_init_nRF24_ports
                   0x000f2c                  _net_irq_max_rt_active
@@ -355,18 +355,18 @@ __CONFIG1
 .comment
  *(.comment)
 
-.debug_info       0x000000        0x894
+.debug_info       0x000000        0x8b9
  *(.debug_info)
- .debug_info      0x000000        0x894 build/default/production/main.o
+ .debug_info      0x000000        0x8b9 build/default/production/main.o
  *(.gnu.linkonce.wi.*)
 
 .debug_abbrev     0x000000        0x18a
  *(.debug_abbrev)
  .debug_abbrev    0x000000        0x18a build/default/production/main.o
 
-.debug_line       0x000000        0x150
+.debug_line       0x000000        0x15e
  *(.debug_line)
- .debug_line      0x000000        0x150 build/default/production/main.o
+ .debug_line      0x000000        0x15e build/default/production/main.o
 
 .debug_frame      0x000000         0x8a
  *(.debug_frame)
@@ -1209,7 +1209,7 @@ __c30_signature
  .const             0x89d2          0x2 build/default/production/main.o
                     0x89d2                  _SENSOR_OFFSET
 
-.text             0x0009d4       0x10d4
+.text             0x0009d4       0x1106
  .text            0x0009d4        0x60c build/default/production/netio.o
                   0x0009d4                  _net_init_nRF24_ports
                   0x000a20                  _net_config_nRF24
@@ -1248,12 +1248,12 @@ __c30_signature
                   0x0014dc                  _are_ext_adc_interrupts_enabled
                   0x0014e0                  _set_adc_control_state
                   0x001514                  _sys_get_imu_data
- .text            0x0015ec        0x4bc build/default/production/main.o
-                  0x001a26                  _main
+ .text            0x0015ec        0x4ee build/default/production/main.o
+                  0x001a58                  _main
 
-.dinit            0x001aa8         0xaa
- .dinit           0x001aa8         0xaa data_init
+.dinit            0x001ada         0xaa
+ .dinit           0x001ada         0xaa data_init
 
-.init.delay32     0x001b52         0x1c
- .init.delay32    0x001b52         0x1c c:/program files (x86)/microchip/xc16/v1.31/bin/bin/../../lib\libpic30-elf.a(delay32.eo)
-                  0x001b52                  ___delay32
+.init.delay32     0x001b84         0x1c
+ .init.delay32    0x001b84         0x1c c:/program files (x86)/microchip/xc16/v1.31/bin/bin/../../lib\libpic30-elf.a(delay32.eo)
+                  0x001b84                  ___delay32

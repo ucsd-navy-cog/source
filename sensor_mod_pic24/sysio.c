@@ -143,7 +143,7 @@ static void WriteIMUReg(int addr, int dat)
   //switchSPIModeADC();
 }
 
-static uint8 imu_adc_control_state = ACTIVE_IMU_ACC | ACTIVE_ADC_PPG;
+static uint8 imu_adc_control_state = ACTIVE_IMU_ALL | ACTIVE_ADC_ALL; // ACTIVE_IMU_ACC | ACTIVE_ADC_PPG;
 
 #if defined(ENABLE_IMU)
 
