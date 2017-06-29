@@ -143,7 +143,7 @@ static void WriteIMUReg(int addr, int dat)
   //switchSPIModeADC();
 }
 
-static uint8 imu_adc_control_state = ACTIVE_IMU_ALL | ACTIVE_ADC_ALL; // ACTIVE_IMU_ACC | ACTIVE_ADC_PPG;
+static uint8 imu_adc_control_state = ACTIVE_IMU_ACC | ACTIVE_ADC_PPG;
 
 #if defined(ENABLE_IMU)
 
@@ -377,7 +377,7 @@ static void init_intern_adc() // primarily used for BATTERY VOLTAGE READING
     AD1CON2bits.VCFG = 0b0; //AVDD References
 
     AD1CON3 = 0;
-    AD1CON3bits.ADCS = 8; //divide internal system clock by 8 (8 MHz = 1 Mhz)
+    AD1CON3bits.ADCS = 0;//8; //divide internal system clock by 8 (8 MHz = 1 Mhz)
 
     //initADCAcc();
     //AD1PCFG = AD1PCFG & (~(1 << AN_BATT));
@@ -1153,7 +1153,7 @@ void process_interr_imu_samples()
 void __attribute__((__interrupt__, __shadow__, __no_auto_psv__)) _T4Interrupt(void)
 {
 
-  prep_battery_voltage_sampling();
+  //prep_battery_voltage_sampling();
 
   //t4_interupt_counter ++;
   
@@ -1164,7 +1164,7 @@ void __attribute__((__interrupt__, __shadow__, __no_auto_psv__)) _T4Interrupt(vo
   process_interr_imu_samples();
  
   // battery shit
-  finish_battery_voltage_sampling();
+  //finish_battery_voltage_sampling();
 
   //TOGGLE_LED();
   //test_counter++;

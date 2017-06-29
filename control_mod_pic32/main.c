@@ -10,7 +10,7 @@
 //#define TX_PAYLOAD_SIZE       (6)   // to sensors - should match stream_XXX_bytes_w() below
 #define TX_PAYLOAD_SIZE       (10)   // to sensors - should match stream_XXX_bytes_w() below
 
-#define SENSOR_CUTOFF         (450) // (CONTROL_MODULE_TIMING - SENSOR_CUTOFF) == is the real time point that the CM cuts off waiting for responses from sensors. Sensor 3 is esp sensitive to this.
+#define SENSOR_CUTOFF         (500) // (CONTROL_MODULE_TIMING - SENSOR_CUTOFF) == is the real time point that the CM cuts off waiting for responses from sensors. Sensor 3 is esp sensitive to this.
                                     // subtracted delta (in us) should be sufficient for uploading data to Presentation Module. UPDATE. we need to speed up upload... -100 to -200 deficit.
 
 // presumptive helper macro (v is an array)
@@ -250,7 +250,7 @@ static void get_sensor_data()
       got_sensor_data[sid] = true;
 
 #if !defined(ENABLE_UPLOAD_DATA)
-#if 0
+#if 1
       uint16 time_used = ((uint16)rdata[29] << 8) + rdata[30]; 
       if (time_used)
         printf("time_used = %u\n",time_used);
@@ -382,8 +382,8 @@ static void upload_sensor_data()
   // footer - 4 bytes
   buffer[i++] = 0x12;
   
-  buffer[i++] = 0x12;
-  //buffer[i++] = battery_volt[3]; // specify which sensor to send [x]
+  //buffer[i++] = 0x12;
+  buffer[i++] = battery_volt[3];
 
   buffer[i++] = 0x00;
   buffer[i++] = 0x00;

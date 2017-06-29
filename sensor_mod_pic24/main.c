@@ -48,8 +48,8 @@ static uint8 s_data[32];
 static uint8 r_data[32];
 
 #define SENSOR_SEND_POINT            (900)
-#define SENSOR_INTERVAL_WINDOW       (625)   // target time between each sensor tranmission
-#define TIME_SLOT_CAP                (3950)  // before CM moves on - this includes it's own small overhead and the 100 us reserved for uploading data to GUI (PM) - Rule: SENSOR_SEND_POINT + (SENSOR_INTERVAL_WINDOW*4) < TIME_SLOT_CAP
+#define SENSOR_INTERVAL_WINDOW       (550)   // target time between each sensor tranmission
+#define TIME_SLOT_CAP                (3750)  // before CM moves on - this includes it's own small overhead and the 100 us reserved for uploading data to GUI (PM) - Rule: SENSOR_SEND_POINT + (SENSOR_INTERVAL_WINDOW*4) < TIME_SLOT_CAP
 
 const uint SENSOR_OFFSET = (SENSOR_INTERVAL_WINDOW * SENSOR_MODULE) + SENSOR_SEND_POINT;
 
@@ -61,7 +61,6 @@ static void sensor_loop()
   IMU_DATA_STATE imu_data;
 #endif
   uint32 cm_delay = 8000; // us -- initialize to a really large value - it'll result in an initial jump is power, then followed by really low power drop until CM comes back online.
-  uint32 init_time_passed;
 #if defined(ENABLE_TIME_REPORTING)
   static uint16 timer = 0;
   static uint16 t_counter = 0;
@@ -76,9 +75,9 @@ static void sensor_loop()
 
   net_turn_radio_on(); // approx 11 us
 
-//#if defined(ENABLE_EXT_ADC)
-  sys_start_timer32();
-//#endif
+#if defined(ENABLE_EXT_ADC)
+  sys_start_timer32();  // not compatible with code right below here
+#endif
 
   // wait and listen - timed at 198 us
   while (!(net_irq_pin_active() && net_irq_rx_dr_active())) {
@@ -106,9 +105,7 @@ static void sensor_loop()
   }
   
   // fix - restart after nrf24 receive interrupt occurs
-  init_time_passed = sys_stop_timer32();
-
-  sys_start_timer32();
+  sys_stop_timer32();
   
   bool adc_ints_en = are_ext_adc_interrupts_enabled(); // use original state 
 
@@ -123,6 +120,8 @@ static void sensor_loop()
 //    moving_delta = 0;
 //  }
 //#endif
+
+  sys_start_timer32();
 
   net_turn_radio_off(); // turn off radio asap
 
@@ -142,7 +141,7 @@ static void sensor_loop()
     goto fail;
   }
 
-  if (!adc_ints_en)
+  //if (!adc_ints_en)
     prep_battery_voltage_sampling();
   
 #if 0 // defined(ENABLE_EXT_ADC)
@@ -280,7 +279,7 @@ static void sensor_loop()
 
 
   //get_battery_voltage
-  if (!adc_ints_en)
+  //if (!adc_ints_en)
       finish_battery_voltage_sampling();
   s_data[26] = get_battery_voltage_val();
   
@@ -364,16 +363,13 @@ static void sensor_loop()
     send_timer = true;
   }
 #endif
-  
-  if (time_to_delay > (TIME_SLOT_CAP-40) - time_to_delay)
-      return;
 
-  time_to_delay = (TIME_SLOT_CAP-40) - time_to_delay;
+  time_to_delay = (TIME_SLOT_CAP - time_to_delay);
 
   // 12400 - max
 #if defined(ENABLE_EXT_ADC)
   if (adc_ints_en) {
-    ////time_to_delay = time_to_delay - init_time_passed; // probably overhead for nrf read at top (~194) - OR interrupt overhead during Idle() and processing HERE
+    time_to_delay = time_to_delay - 195; // probably overhead for nrf read at top (~194) - OR interrupt overhead during Idle() and processing HERE -- tuned for 12k
     sys_start_timer32();
     PR1 = time_to_delay * FREQ_MULT; // 10100 - static for 12k
     T1CONbits.TON = 1;
